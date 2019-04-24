@@ -1,0 +1,40 @@
+version: '3'
+services:
+  school-discovery:
+    image: jpdacunha/microservice-docker-school-discovery:0.0.1-SNAPSHOT
+    ports:
+      - 8761:8761
+  school-shared-config:
+    image: jpdacunha/microservice-docker-school-shared-config:0.0.1-SNAPSHOT
+    volumes:
+      - ./config-data:/var/config-data
+    environment:
+      - JAVA_OPTS=
+        -DEUREKA_SERVER=http://school-discovery:8761/eureka
+        -Dspring.cloud.config.server.native.searchLocations=/var/config-data
+    depends_on:
+      - school-discovery
+    ports:
+      - 8888:8888
+  school-service:
+    image: jpdacunha/microservice-docker-school-service:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -DEUREKA_SERVER=http://school-discovery:8761/eureka
+    depends_on:
+      - school-discovery
+      - school-shared-config
+    ports:
+      - 8081:8081
+  school-ui:
+    image: jpdacunha/microservice-docker-school-ui:0.0.1-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -DEUREKA_SERVER=http://school-discovery:8761/eureka
+        -Dspring.profiles.active=production
+    restart: on-failure
+    depends_on:
+      - school-discovery
+      - school-shared-config
+    ports:
+      - 8080:8080
